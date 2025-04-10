@@ -26,8 +26,8 @@
 
 // Application states
 typedef enum {
-    MorseStateTitleScreen,  // New title screen state
-    MorseStateMenu,
+    MorseStateTitleScreen,
+    MorseStateMenu,        // Main menu with icons
     MorseStateLearn,
     MorseStatePractice,
     MorseStateHelp,
@@ -349,60 +349,66 @@ static void morse_app_draw_callback(Canvas* canvas, void* ctx) {
     if(!app || !canvas) return;
     
     canvas_clear(canvas);
-    canvas_set_font(canvas, FontPrimary);
-    
+    // Make background black
+    canvas_set_color(canvas, ColorBlack);
+    canvas_draw_box(canvas, 0, 0, 128, 64);
+    canvas_draw_icon(canvas, 0, 45, &I_menu_bg);
+
     switch(app->app_state) {
         case MorseStateTitleScreen:
             draw_title_screen(canvas, app);
             break;
             
         case MorseStateMenu: {
-            // Draw menu title
-            canvas_draw_str(canvas, 2, 10, "MORSE MASTER");
-            canvas_draw_line(canvas, 0, 12, 128, 12);
+            canvas_draw_icon(canvas, 0, 45, &I_menu_bg);
+
+            canvas_set_color(canvas, ColorWhite);
+            // Define menu items and their corresponding titles
+            const char* menu_titles[] = {"LEARN", "PRACTICE", "HELP"};
             
-            // Draw menu items
-            const char* menu_items[] = {
-                "Learn Morse",
-                "Practice",
-                "Help",
-                "Exit"
-            };
+            // Display title based on current selection at the top
+            canvas_set_font(canvas, FontPrimary);
+            canvas_draw_str_aligned(canvas, 64, 10, AlignCenter, AlignCenter, menu_titles[app->menu_selection]);
             
-            for(int i = 0; i < 4; i++) {
-                canvas_draw_str(canvas, 10, 25 + i * 10, menu_items[i]);
-                if(app->menu_selection == i) {
-                    canvas_draw_str(canvas, 2, 25 + i * 10, ">");
-                }
-            }
+            const int16_t y_offset = 24;
+
+            // Draw rectangle around the selected icon (instead of triangles)
+            canvas_draw_frame(
+                canvas,
+                8+app->menu_selection*40,  // x 
+                y_offset-4, // y
+                32,                 // width
+                28                  // height
+            );
+            canvas_set_color(canvas, ColorBlack);
+            
+            canvas_draw_icon(canvas, 12, y_offset, &I_learn);
+            canvas_draw_icon(canvas, 54, y_offset, &I_practice);
+            canvas_draw_icon(canvas, 94, y_offset, &I_help);
+
             break;
         }
         
         case MorseStateLearn: {
-            // Draw learning screen
-            canvas_draw_str(canvas, 2, 10, "LEARN MORSE");
-            canvas_draw_line(canvas, 0, 12, 128, 12);
+            canvas_draw_icon(canvas, 5, 17, &I_learning_bg);
             
-            // Display current mode
-            char mode_str[32];
-            snprintf(mode_str, sizeof(mode_str), "Mode: %s", app->learning_letters_mode ? "Letters" : "Numbers");
-            canvas_draw_str(canvas, 5, 25, mode_str);
-            
+            canvas_set_font(canvas, FontPrimary);
+
             // Display current character
             char txt[32];
-            snprintf(txt, sizeof(txt), "Character: %c", app->current_char);
-            canvas_draw_str(canvas, 5, 37, txt);
+            snprintf(txt, sizeof(txt), "%c", app->current_char);
+            canvas_draw_str(canvas, 20, 33, txt);
             
             // Display Morse code
             const char* morse = get_morse_for_char(app->current_char);
-            snprintf(txt, sizeof(txt), "Morse: %s", morse ? morse : "");
-            canvas_draw_str(canvas, 5, 49, txt);
+            snprintf(txt, sizeof(txt), "%s", morse ? morse : "");
+            canvas_draw_str(canvas, 75, 33, txt);
             
+            canvas_set_color(canvas, ColorWhite);
+
             // Display instructions
-            canvas_draw_str(canvas, 5, 64, "OK: Play sound");
-            canvas_draw_str(canvas, 5, 73, "UP/DOWN: Prev/Next char");
-            canvas_draw_str(canvas, 5, 82, "LEFT: Letters mode");
-            canvas_draw_str(canvas, 5, 91, "RIGHT: Numbers mode");
+            canvas_draw_str(canvas, 5, 12, "< Prev");
+            canvas_draw_str(canvas, 70, 12, "Next >");
             break;
         }
         
@@ -487,15 +493,18 @@ static void morse_app_input_callback(InputEvent* input_event, void* ctx) {
             break;
             
         case MorseStateMenu:
-            if(input_event->key == InputKeyUp && input_event->type == InputTypeShort) {
+            if(input_event->key == InputKeyLeft && input_event->type == InputTypeShort) {
+                // Move selection left (with wrap-around)
                 app->menu_selection = (app->menu_selection > 0) ? 
-                    app->menu_selection - 1 : 3;
+                    app->menu_selection - 1 : 2; // Wrap to last item
             }
-            else if(input_event->key == InputKeyDown && input_event->type == InputTypeShort) {
-                app->menu_selection = (app->menu_selection < 3) ? 
-                    app->menu_selection + 1 : 0;
+            else if(input_event->key == InputKeyRight && input_event->type == InputTypeShort) {
+                // Move selection right (with wrap-around)
+                app->menu_selection = (app->menu_selection < 2) ? 
+                    app->menu_selection + 1 : 0; // Wrap to first item
             }
             else if(input_event->key == InputKeyOk && input_event->type == InputTypeShort) {
+                // Open the selected option
                 switch(app->menu_selection) {
                     case 0: // Learn
                         app->app_state = MorseStateLearn;
@@ -508,10 +517,6 @@ static void morse_app_input_callback(InputEvent* input_event, void* ctx) {
                         
                     case 2: // Help
                         app->app_state = MorseStateHelp;
-                        break;
-                        
-                    case 3: // Exit
-                        app->is_running = false;
                         break;
                 }
             }
@@ -813,23 +818,5 @@ static void update_top_words_marquee(MorseApp* app, char new_char) {
 static void draw_title_screen(Canvas* canvas, MorseApp* app) {
     UNUSED(app);  // Mark parameter as unused to prevent compiler warning
     
-    // // Draw a nice background color
-    // canvas_set_color(canvas, ColorBlack);
-    // canvas_draw_box(canvas, 0, 0, 128, 64);
-    // canvas_set_color(canvas, ColorWhite);
-    
-    // // Display "MORSE MASTER" title text
-    // canvas_set_font(canvas, FontPrimary);
-    // canvas_draw_str_aligned(canvas, 64, 20, AlignCenter, AlignCenter, "MORSE MASTER");
-    
-    // // Add a decorative morse code pattern
-    // canvas_draw_str_aligned(canvas, 64, 35, AlignCenter, AlignCenter, ".-. -.-. . ... ---");
-    
-    // // Add press any button prompt at the bottom
-    // canvas_set_font(canvas, FontSecondary);
-    // canvas_draw_str_aligned(canvas, 64, 55, AlignCenter, AlignCenter, "Press any button to start");
-
-    // // Draw the title screen image
     canvas_draw_icon(canvas, 0, 0, &I_title_screen);
-    
 }
