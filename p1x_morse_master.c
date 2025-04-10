@@ -1,5 +1,6 @@
 #include <furi.h>
 #include <gui/gui.h>
+#include <gui/elements.h>
 #include <input/input.h>
 #include <notification/notification_messages.h>
 #include <furi_hal.h>
@@ -7,6 +8,9 @@
 #include <furi_hal_speaker.h>
 #include <string.h>
 #include <ctype.h>
+
+// Include icons
+#include "p1x_morse_master_icons.h"
 
 // Timing Configuration (in milliseconds)
 #define DOT_DURATION_MS 150
@@ -22,6 +26,7 @@
 
 // Application states
 typedef enum {
+    MorseStateTitleScreen,  // New title screen state
     MorseStateMenu,
     MorseStateLearn,
     MorseStatePractice,
@@ -131,6 +136,7 @@ static int32_t sound_worker_thread(void* context);
 static char get_char_for_morse(const char* morse);
 static void try_decode_morse(MorseApp* app);
 static void draw_help_screen(Canvas* canvas, MorseApp* app);
+static void draw_title_screen(Canvas* canvas, MorseApp* app);
 static void update_top_words_marquee(MorseApp* app, char new_char);
 
 // Get morse code for a character
@@ -346,6 +352,10 @@ static void morse_app_draw_callback(Canvas* canvas, void* ctx) {
     canvas_set_font(canvas, FontPrimary);
     
     switch(app->app_state) {
+        case MorseStateTitleScreen:
+            draw_title_screen(canvas, app);
+            break;
+            
         case MorseStateMenu: {
             // Draw menu title
             canvas_draw_str(canvas, 2, 10, "MORSE MASTER");
@@ -469,6 +479,13 @@ static void morse_app_input_callback(InputEvent* input_event, void* ctx) {
     }
     
     switch(app->app_state) {
+        case MorseStateTitleScreen:
+            // Any button press on title screen advances to main menu
+            if(input_event->type == InputTypeShort || input_event->type == InputTypeLong) {
+                app->app_state = MorseStateMenu;
+            }
+            break;
+            
         case MorseStateMenu:
             if(input_event->key == InputKeyUp && input_event->type == InputTypeShort) {
                 app->menu_selection = (app->menu_selection > 0) ? 
@@ -690,7 +707,7 @@ int32_t p1x_morse_master_app(void* p) {
     }
     
     // Set up default values
-    app->app_state = MorseStateMenu;
+    app->app_state = MorseStateTitleScreen;  // Start with title screen
     app->menu_selection = 0;
     app->is_running = true;
     app->sound_running = true;
@@ -790,4 +807,29 @@ static void update_top_words_marquee(MorseApp* app, char new_char) {
         app->top_words[TOP_WORDS_MAX_LENGTH - 1] = new_char;
         app->top_words[TOP_WORDS_MAX_LENGTH] = '\0';
     }
+}
+
+// Draw the title screen with the title-screen.png image
+static void draw_title_screen(Canvas* canvas, MorseApp* app) {
+    UNUSED(app);  // Mark parameter as unused to prevent compiler warning
+    
+    // // Draw a nice background color
+    // canvas_set_color(canvas, ColorBlack);
+    // canvas_draw_box(canvas, 0, 0, 128, 64);
+    // canvas_set_color(canvas, ColorWhite);
+    
+    // // Display "MORSE MASTER" title text
+    // canvas_set_font(canvas, FontPrimary);
+    // canvas_draw_str_aligned(canvas, 64, 20, AlignCenter, AlignCenter, "MORSE MASTER");
+    
+    // // Add a decorative morse code pattern
+    // canvas_draw_str_aligned(canvas, 64, 35, AlignCenter, AlignCenter, ".-. -.-. . ... ---");
+    
+    // // Add press any button prompt at the bottom
+    // canvas_set_font(canvas, FontSecondary);
+    // canvas_draw_str_aligned(canvas, 64, 55, AlignCenter, AlignCenter, "Press any button to start");
+
+    // // Draw the title screen image
+    canvas_draw_icon(canvas, 0, 0, &I_title_screen);
+    
 }
