@@ -135,8 +135,6 @@ static const char* get_morse_for_char(char c);
 static int32_t sound_worker_thread(void* context);
 static char get_char_for_morse(const char* morse);
 static void try_decode_morse(MorseApp* app);
-static void draw_help_screen(Canvas* canvas, MorseApp* app);
-static void draw_title_screen(Canvas* canvas, MorseApp* app);
 static void update_top_words_marquee(MorseApp* app, char new_char);
 
 // Get morse code for a character
@@ -356,7 +354,7 @@ static void morse_app_draw_callback(Canvas* canvas, void* ctx) {
 
     switch(app->app_state) {
         case MorseStateTitleScreen:
-            draw_title_screen(canvas, app);
+            canvas_draw_icon(canvas, 0, 0, &I_title_screen);
             break;
             
         case MorseStateMenu: {
@@ -390,29 +388,31 @@ static void morse_app_draw_callback(Canvas* canvas, void* ctx) {
         }
         
         case MorseStateLearn: {
-            canvas_draw_icon(canvas, 5, 17, &I_learning_bg);
+            canvas_draw_icon(canvas, 20, 22, &I_learning_bg);
             
             canvas_set_font(canvas, FontPrimary);
 
             // Display current character
             char txt[32];
             snprintf(txt, sizeof(txt), "%c", app->current_char);
-            canvas_draw_str(canvas, 20, 33, txt);
+            canvas_draw_str(canvas, 40, 40, txt);
             
             // Display Morse code
             const char* morse = get_morse_for_char(app->current_char);
             snprintf(txt, sizeof(txt), "%s", morse ? morse : "");
-            canvas_draw_str(canvas, 75, 33, txt);
+            canvas_draw_str(canvas, 67, 40, txt);
             
             canvas_set_color(canvas, ColorWhite);
 
             // Display instructions
-            canvas_draw_str(canvas, 5, 12, "< Prev");
-            canvas_draw_str(canvas, 70, 12, "Next >");
+            canvas_draw_str(canvas, 8, 16, "< Prev");
+            canvas_draw_str(canvas, 85, 16, "Next >");
             break;
         }
         
         case MorseStatePractice: {
+            canvas_set_color(canvas, ColorWhite);
+
             // Draw practice screen
             canvas_draw_str(canvas, 2, 10, "PRACTICE");
             canvas_draw_line(canvas, 0, 12, 128, 12);
@@ -464,7 +464,25 @@ static void morse_app_draw_callback(Canvas* canvas, void* ctx) {
         }
         
         case MorseStateHelp: {
-            draw_help_screen(canvas, app);
+            canvas_set_color(canvas, ColorWhite);
+
+            canvas_set_font(canvas, FontPrimary);
+            canvas_draw_str(canvas, 2, 10, "MORSE CODE HELP");
+            canvas_draw_line(canvas, 0, 12, 128, 12);
+            
+            canvas_set_font(canvas, FontSecondary);
+            
+            int16_t y_offset = 22;
+            canvas_draw_str(canvas, 2, y_offset, "PRACTICE MODE:");
+            y_offset += 10;
+            canvas_draw_str(canvas, 2, y_offset, "- OK and LEFT:");
+            y_offset += 10;
+            canvas_draw_str(canvas, 2, y_offset, "    Short=dot, Long=dash");
+            y_offset += 10;
+            canvas_draw_str(canvas, 2, y_offset, "- RIGHT: Clear input");
+            y_offset += 10;
+            canvas_draw_str(canvas, 2, y_offset, "- UP/DOWN: Adjust volume");
+        
             break;
         }
         
@@ -530,17 +548,17 @@ static void morse_app_input_callback(InputEvent* input_event, void* ctx) {
                 // Play the character's morse code
                 play_character(app, app->current_char);
             }
-            else if(input_event->key == InputKeyLeft && input_event->type == InputTypeShort) {
+            else if(input_event->key == InputKeyUp && input_event->type == InputTypeShort) {
                 // Switch to letters mode
                 app->learning_letters_mode = true;
                 app->current_char = 'A';
             }
-            else if(input_event->key == InputKeyRight && input_event->type == InputTypeShort) {
+            else if(input_event->key == InputKeyDown && input_event->type == InputTypeShort) {
                 // Switch to numbers mode
                 app->learning_letters_mode = false;
                 app->current_char = '0';
             }
-            else if(input_event->key == InputKeyDown && input_event->type == InputTypeShort) {
+            else if(input_event->key == InputKeyRight && input_event->type == InputTypeShort) {
                 // Show next character based on current mode
                 if (app->learning_letters_mode) {
                     // Letters mode
@@ -556,7 +574,7 @@ static void morse_app_input_callback(InputEvent* input_event, void* ctx) {
                         app->current_char++;
                 }
             }
-            else if(input_event->key == InputKeyUp && input_event->type == InputTypeShort) {
+            else if(input_event->key == InputKeyLeft && input_event->type == InputTypeShort) {
                 // Show previous character based on current mode
                 if (app->learning_letters_mode) {
                     // Letters mode
@@ -773,27 +791,6 @@ int32_t p1x_morse_master_app(void* p) {
     return 0;
 }
 
-static void draw_help_screen(Canvas* canvas, MorseApp* app) {
-    UNUSED(app);  // Mark parameter as unused to prevent compiler warning
-    
-    canvas_set_font(canvas, FontPrimary);
-    canvas_draw_str(canvas, 2, 10, "MORSE CODE HELP");
-    canvas_draw_line(canvas, 0, 12, 128, 12);
-    
-    canvas_set_font(canvas, FontSecondary);
-    
-    int16_t y_offset = 22;
-    canvas_draw_str(canvas, 2, y_offset, "PRACTICE MODE:");
-    y_offset += 10;
-    canvas_draw_str(canvas, 2, y_offset, "- OK and LEFT:");
-    y_offset += 10;
-    canvas_draw_str(canvas, 2, y_offset, "    Short=dot, Long=dash");
-    y_offset += 10;
-    canvas_draw_str(canvas, 2, y_offset, "- RIGHT: Clear input");
-    y_offset += 10;
-    canvas_draw_str(canvas, 2, y_offset, "- UP/DOWN: Adjust volume");
-}
-
 // Function to update the top words marquee buffer
 static void update_top_words_marquee(MorseApp* app, char new_char) {
     // If there's room in the buffer, just append
@@ -812,11 +809,4 @@ static void update_top_words_marquee(MorseApp* app, char new_char) {
         app->top_words[TOP_WORDS_MAX_LENGTH - 1] = new_char;
         app->top_words[TOP_WORDS_MAX_LENGTH] = '\0';
     }
-}
-
-// Draw the title screen with the title-screen.png image
-static void draw_title_screen(Canvas* canvas, MorseApp* app) {
-    UNUSED(app);  // Mark parameter as unused to prevent compiler warning
-    
-    canvas_draw_icon(canvas, 0, 0, &I_title_screen);
 }
