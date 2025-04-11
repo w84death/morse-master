@@ -413,17 +413,18 @@ static void morse_app_draw_callback(Canvas* canvas, void* ctx) {
         
         case MorseStatePractice: {
             
-            canvas_draw_icon(canvas, 5, 15, &I_ball);
+            canvas_draw_icon(canvas, 5, 14, &I_ball);
+            canvas_draw_icon(canvas, 0, 56, &I_desk);
             
             // Show the appropriate beep icon and hand position based on input state
             if(app->input_active) {
                 // When inputting: show beep_on and move hand down by 6px
-                canvas_draw_icon(canvas, 47, 34, &I_beep_on);
-                canvas_draw_icon(canvas, 80, 18, &I_hand); // Hand moved down by 6px
+                canvas_draw_icon(canvas, 47, 33, &I_beep_on);
+                canvas_draw_icon(canvas, 80, 16, &I_hand); // Hand moved down by 6px
             } else {
                 // Normal state: show beep_off and hand in normal position
-                canvas_draw_icon(canvas, 47, 34, &I_beep_off);
-                canvas_draw_icon(canvas, 80, 13, &I_hand); // Normal position
+                canvas_draw_icon(canvas, 47, 33, &I_beep_off);
+                canvas_draw_icon(canvas, 80, 12, &I_hand); // Normal position
             }
 
             canvas_set_font(canvas, FontPrimary);
