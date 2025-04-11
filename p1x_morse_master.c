@@ -68,6 +68,7 @@ typedef struct {
     MorseAppState app_state;
     int menu_selection;
     bool is_running;
+    bool input_active;  // Flag to track if input is active (for UI animation)
     
     // Learning
     char current_char;
@@ -411,42 +412,36 @@ static void morse_app_draw_callback(Canvas* canvas, void* ctx) {
         }
         
         case MorseStatePractice: {
-            canvas_set_color(canvas, ColorWhite);
+            
+            canvas_draw_icon(canvas, 5, 15, &I_ball);
+            
+            // Show the appropriate beep icon and hand position based on input state
+            if(app->input_active) {
+                // When inputting: show beep_on and move hand down by 6px
+                canvas_draw_icon(canvas, 47, 34, &I_beep_on);
+                canvas_draw_icon(canvas, 80, 18, &I_hand); // Hand moved down by 6px
+            } else {
+                // Normal state: show beep_off and hand in normal position
+                canvas_draw_icon(canvas, 47, 34, &I_beep_off);
+                canvas_draw_icon(canvas, 80, 13, &I_hand); // Normal position
+            }
 
-            // Draw practice screen
-            canvas_draw_str(canvas, 2, 10, "PRACTICE");
-            canvas_draw_line(canvas, 0, 12, 128, 12);
-            
-            // Display top words marquee (new method)
             canvas_set_font(canvas, FontPrimary);
-            
-            // Try to decode if there's a pause
+
+            canvas_set_color(canvas, ColorWhite);
             try_decode_morse(app);
             
-            // Display words  (old)
-            canvas_draw_str(canvas, 5, 25, app->top_words);
+            canvas_draw_str(canvas, 5, 12, app->top_words);
             
-            // Display current morse being decoded
             char current_status[64];
-            snprintf(current_status, sizeof(current_status), "Current: %s", app->current_morse);
-            canvas_draw_str(canvas, 5, 49, current_status);
-            
-            // Display decoded text with last decoded character
-            char decoded_line[MAX_MORSE_LENGTH + 20];
-            if (app->last_decoded_char == '?') {
-                snprintf(decoded_line, sizeof(decoded_line), "Decoded: [unknown]");
-            } else if (app->last_decoded_char == 0) {
-                snprintf(decoded_line, sizeof(decoded_line), "Decoded:");
-            } else {
-                snprintf(decoded_line, sizeof(decoded_line), "Decoded: %c", app->last_decoded_char);
-            }
-            canvas_draw_str(canvas, 5, 61, decoded_line);
+            snprintf(current_status, sizeof(current_status), "%s", app->current_morse);
+            canvas_draw_str(canvas, 12, 36, current_status);
             
             // Display volume level
-            char volume_str[20];
-            int volume_bars = (int)(app->volume * 10);
-            snprintf(volume_str, sizeof(volume_str), "Vol: [");
-            for(int i = 0; i < 10; i++) {
+            char volume_str[10];
+            int volume_bars = (int)(app->volume * 5);
+            snprintf(volume_str, sizeof(volume_str), "[");
+            for(int i = 0; i < 5; i++) {
                 if(i < volume_bars) {
                     snprintf(volume_str + strlen(volume_str), sizeof(volume_str) - strlen(volume_str), "|");
                 } else {
@@ -454,12 +449,9 @@ static void morse_app_draw_callback(Canvas* canvas, void* ctx) {
                 }
             }
             snprintf(volume_str + strlen(volume_str), sizeof(volume_str) - strlen(volume_str), "]");
-            canvas_set_font(canvas, FontSecondary);
-            canvas_draw_str(canvas, 5, 75, volume_str);
             
-            // Display instructions
-            canvas_draw_str(canvas, 5, 94, "OK: Short=Dot Long=Dash");
-            canvas_draw_str(canvas, 5, 104, "LEFT: Space  RIGHT: Clear");
+            canvas_draw_str(canvas, 100, 60, volume_str);
+            
             break;
         }
         
@@ -498,8 +490,23 @@ static void morse_app_input_callback(InputEvent* input_event, void* ctx) {
     
     // Update last input time for practice mode
     if(app->app_state == MorseStatePractice && 
-       (input_event->key == InputKeyOk || input_event->key == InputKeyRight)) {
+       (input_event->key == InputKeyOk || input_event->key == InputKeyLeft)) {
         app->last_input_time = furi_hal_rtc_get_timestamp();
+    }
+    
+    // Handle input_active state for practice mode animation
+    if(app->app_state == MorseStatePractice) {
+        if((input_event->key == InputKeyOk || input_event->key == InputKeyLeft)) {
+            if(input_event->type == InputTypePress) {
+                // On press, activate the animation
+                app->input_active = true;
+                view_port_update(app->view_port);
+            } else if(input_event->type == InputTypeRelease) {
+                // On release, deactivate the animation
+                app->input_active = false;
+                view_port_update(app->view_port);
+            }
+        }
     }
     
     switch(app->app_state) {
@@ -531,6 +538,7 @@ static void morse_app_input_callback(InputEvent* input_event, void* ctx) {
                     case 1: // Practice
                         app->app_state = MorseStatePractice;
                         memset(app->user_input, 0, sizeof(app->user_input));
+                        app->input_active = false; // Initialize to inactive
                         break;
                         
                     case 2: // Help
@@ -734,6 +742,7 @@ int32_t p1x_morse_master_app(void* p) {
     app->menu_selection = 0;
     app->is_running = true;
     app->sound_running = true;
+    app->input_active = false;  // Initialize input_active flag
     app->current_char = 'A'; // Start with A instead of E
     app->learning_letters_mode = true; // Start in letters mode
     app->input_position = 0;
