@@ -175,10 +175,16 @@ static int32_t sound_worker_thread(void* context) {
                 case SoundCommandDot:
                     // Play dot
                     if(furi_hal_speaker_acquire(1000)) {
-                        furi_hal_speaker_start(DEFAULT_FREQUENCY, app->volume); // Use volume setting
+                        // Only play sound if volume is not 0
+                        if(app->volume > 0.0f) {
+                            furi_hal_speaker_start(DEFAULT_FREQUENCY, app->volume);
+                        }
+                        // Visual feedback is always shown regardless of volume
                         notification_message(app->notifications, &sequence_set_only_red_255);
                         furi_delay_ms(DOT_DURATION_MS);
-                        furi_hal_speaker_stop();
+                        if(app->volume > 0.0f) {
+                            furi_hal_speaker_stop();
+                        }
                         notification_message(app->notifications, &sequence_reset_red);
                         furi_hal_speaker_release();
                     }
@@ -188,10 +194,16 @@ static int32_t sound_worker_thread(void* context) {
                 case SoundCommandDash:
                     // Play dash
                     if(furi_hal_speaker_acquire(1000)) {
-                        furi_hal_speaker_start(DEFAULT_FREQUENCY, app->volume); // Use volume setting
+                        // Only play sound if volume is not 0
+                        if(app->volume > 0.0f) {
+                            furi_hal_speaker_start(DEFAULT_FREQUENCY, app->volume);
+                        }
+                        // Visual feedback is always shown regardless of volume
                         notification_message(app->notifications, &sequence_set_only_blue_255);
                         furi_delay_ms(DASH_DURATION_MS);
-                        furi_hal_speaker_stop();
+                        if(app->volume > 0.0f) {
+                            furi_hal_speaker_stop();
+                        }
                         notification_message(app->notifications, &sequence_reset_blue);
                         furi_hal_speaker_release();
                     }
@@ -208,10 +220,14 @@ static int32_t sound_worker_thread(void* context) {
                                 if(morse[0] == '.') {
                                     // Play dot directly for immediate feedback
                                     if(furi_hal_speaker_acquire(1000)) {
-                                        furi_hal_speaker_start(DEFAULT_FREQUENCY, app->volume);
+                                        if(app->volume > 0.0f) {
+                                            furi_hal_speaker_start(DEFAULT_FREQUENCY, app->volume);
+                                        }
                                         notification_message(app->notifications, &sequence_set_only_red_255);
                                         furi_delay_ms(DOT_DURATION_MS);
-                                        furi_hal_speaker_stop();
+                                        if(app->volume > 0.0f) {
+                                            furi_hal_speaker_stop();
+                                        }
                                         notification_message(app->notifications, &sequence_reset_red);
                                         furi_hal_speaker_release();
                                     }
@@ -220,10 +236,14 @@ static int32_t sound_worker_thread(void* context) {
                                 } else if(morse[0] == '-') {
                                     // Play dash directly for immediate feedback
                                     if(furi_hal_speaker_acquire(1000)) {
-                                        furi_hal_speaker_start(DEFAULT_FREQUENCY, app->volume);
+                                        if(app->volume > 0.0f) {
+                                            furi_hal_speaker_start(DEFAULT_FREQUENCY, app->volume);
+                                        }
                                         notification_message(app->notifications, &sequence_set_only_blue_255);
                                         furi_delay_ms(DASH_DURATION_MS);
-                                        furi_hal_speaker_stop();
+                                        if(app->volume > 0.0f) {
+                                            furi_hal_speaker_stop();
+                                        }
                                         notification_message(app->notifications, &sequence_reset_blue);
                                         furi_hal_speaker_release();
                                     }
@@ -237,10 +257,14 @@ static int32_t sound_worker_thread(void* context) {
                                 if(morse[i] == '.') {
                                     // Play dot directly without queueing
                                     if(furi_hal_speaker_acquire(1000)) {
-                                        furi_hal_speaker_start(DEFAULT_FREQUENCY, app->volume);
+                                        if(app->volume > 0.0f) {
+                                            furi_hal_speaker_start(DEFAULT_FREQUENCY, app->volume);
+                                        }
                                         notification_message(app->notifications, &sequence_set_only_red_255);
                                         furi_delay_ms(DOT_DURATION_MS);
-                                        furi_hal_speaker_stop();
+                                        if(app->volume > 0.0f) {
+                                            furi_hal_speaker_stop();
+                                        }
                                         notification_message(app->notifications, &sequence_reset_red);
                                         furi_hal_speaker_release();
                                     }
@@ -249,10 +273,14 @@ static int32_t sound_worker_thread(void* context) {
                                 } else if(morse[i] == '-') {
                                     // Play dash directly without queueing
                                     if(furi_hal_speaker_acquire(1000)) {
-                                        furi_hal_speaker_start(DEFAULT_FREQUENCY, app->volume);
+                                        if(app->volume > 0.0f) {
+                                            furi_hal_speaker_start(DEFAULT_FREQUENCY, app->volume);
+                                        }
                                         notification_message(app->notifications, &sequence_set_only_blue_255);
                                         furi_delay_ms(DASH_DURATION_MS);
-                                        furi_hal_speaker_stop();
+                                        if(app->volume > 0.0f) {
+                                            furi_hal_speaker_stop();
+                                        }
                                         notification_message(app->notifications, &sequence_reset_blue);
                                         furi_hal_speaker_release();
                                     }
@@ -369,21 +397,16 @@ static void morse_app_draw_callback(Canvas* canvas, void* ctx) {
             canvas_set_font(canvas, FontPrimary);
             canvas_draw_str_aligned(canvas, 64, 10, AlignCenter, AlignCenter, menu_titles[app->menu_selection]);
             
-            const int16_t y_offset = 24;
-
-            // Draw rectangle around the selected icon (instead of triangles)
-            canvas_draw_frame(
-                canvas,
-                8+app->menu_selection*40,  // x 
-                y_offset-4, // y
-                32,                 // width
-                28                  // height
-            );
             canvas_set_color(canvas, ColorBlack);
-            
-            canvas_draw_icon(canvas, 12, y_offset, &I_learn);
-            canvas_draw_icon(canvas, 54, y_offset, &I_practice);
-            canvas_draw_icon(canvas, 94, y_offset, &I_help);
+
+            const int16_t y_offset = 24;
+            canvas_draw_icon(canvas, 12, y_offset + (app->menu_selection==0?8:0), &I_learn);
+            canvas_draw_icon(canvas, 54, y_offset + (app->menu_selection==1?8:0), &I_practice);
+            canvas_draw_icon(canvas, 94, y_offset + (app->menu_selection==2?8:0), &I_help);
+
+            const int16_t hand_y_offset = 46;
+            canvas_draw_icon(canvas, -15+app->menu_selection*40, hand_y_offset, &I_hand_left);
+            canvas_draw_icon(canvas, +35+app->menu_selection*40, hand_y_offset, &I_hand_right);
 
             break;
         }
@@ -391,6 +414,13 @@ static void morse_app_draw_callback(Canvas* canvas, void* ctx) {
         case MorseStateLearn: {
             canvas_draw_icon(canvas, 20, 22, &I_learning_bg);
             
+            canvas_draw_icon(canvas, 10, 36, &I_left);
+            canvas_draw_icon(canvas, 110, 36, &I_right);
+            
+            canvas_draw_icon(canvas, 50, 10, &I_up);
+            canvas_draw_icon(canvas, 70, 10, &I_down);
+
+
             canvas_set_font(canvas, FontPrimary);
 
             // Display current character
@@ -404,32 +434,45 @@ static void morse_app_draw_callback(Canvas* canvas, void* ctx) {
             canvas_draw_str(canvas, 67, 40, txt);
             
             canvas_set_color(canvas, ColorWhite);
-
-            // Display instructions
-            canvas_draw_str(canvas, 8, 16, "< Prev");
-            canvas_draw_str(canvas, 85, 16, "Next >");
+            canvas_draw_str(canvas, 28, 16, "A-Z");
+            canvas_draw_str(canvas, 80, 16, "0-9");
             break;
         }
         
         case MorseStatePractice: {
             
-            canvas_draw_icon(canvas, 5, 14, &I_ball);
+            canvas_draw_icon(canvas, 5, 15, &I_ball);
             canvas_draw_icon(canvas, 0, 56, &I_desk);
             
             // Show the appropriate beep icon and hand position based on input state
             if(app->input_active) {
                 // When inputting: show beep_on and move hand down by 6px
-                canvas_draw_icon(canvas, 47, 33, &I_beep_on);
-                canvas_draw_icon(canvas, 80, 16, &I_hand); // Hand moved down by 6px
+                canvas_draw_icon(canvas, 47, 34, &I_beep_on);
+                canvas_draw_icon(canvas, 80, 19, &I_hand); // Hand moved down by 6px
             } else {
                 // Normal state: show beep_off and hand in normal position
-                canvas_draw_icon(canvas, 47, 33, &I_beep_off);
-                canvas_draw_icon(canvas, 80, 12, &I_hand); // Normal position
+                canvas_draw_icon(canvas, 47, 34, &I_beep_off);
+                canvas_draw_icon(canvas, 80, 13, &I_hand); // Normal position
+            }
+
+            canvas_draw_icon(canvas, 114, 52, &I_vol_bg);
+            canvas_set_color(canvas, ColorWhite);
+            // Display volume icon based on volume level
+            if(app->volume == 0.0f) {
+                canvas_draw_icon(canvas, 117, 55, &I_vol_0);
+            } else if(app->volume <= 0.25f) {
+                canvas_draw_icon(canvas, 117, 55, &I_vol_25);
+            } else if(app->volume <= 0.50f) {
+                canvas_draw_icon(canvas, 117, 55, &I_vol_50);
+            } else if(app->volume <= 0.75f) {
+                canvas_draw_icon(canvas, 117, 55, &I_vol_75);
+            } else {
+                canvas_draw_icon(canvas, 117, 55, &I_vol_100);
             }
 
             canvas_set_font(canvas, FontPrimary);
 
-            canvas_set_color(canvas, ColorWhite);
+            
             try_decode_morse(app);
             
             canvas_draw_str(canvas, 5, 12, app->top_words);
@@ -438,20 +481,7 @@ static void morse_app_draw_callback(Canvas* canvas, void* ctx) {
             snprintf(current_status, sizeof(current_status), "%s", app->current_morse);
             canvas_draw_str(canvas, 12, 36, current_status);
             
-            // Display volume level
-            char volume_str[10];
-            int volume_bars = (int)(app->volume * 5);
-            snprintf(volume_str, sizeof(volume_str), "[");
-            for(int i = 0; i < 5; i++) {
-                if(i < volume_bars) {
-                    snprintf(volume_str + strlen(volume_str), sizeof(volume_str) - strlen(volume_str), "|");
-                } else {
-                    snprintf(volume_str + strlen(volume_str), sizeof(volume_str) - strlen(volume_str), " ");
-                }
-            }
-            snprintf(volume_str + strlen(volume_str), sizeof(volume_str) - strlen(volume_str), "]");
             
-            canvas_draw_str(canvas, 100, 60, volume_str);
             
             break;
         }
@@ -675,14 +705,16 @@ static void morse_app_input_callback(InputEvent* input_event, void* ctx) {
             }
             else if(input_event->key == InputKeyUp && input_event->type == InputTypeShort) {
                 // Increase volume (with upper limit)
-                app->volume = (app->volume < 1.0f) ? app->volume + 0.1f : 1.0f;
+                app->volume = (app->volume < 1.0f) ? app->volume + 0.25f : 1.0f;
+                if (app->volume > 1.0f) app->volume = 1.0f; // Make sure we don't exceed 1.0
                 notification_message(app->notifications, &sequence_set_only_green_255);
                 furi_delay_ms(100);
                 notification_message(app->notifications, &sequence_reset_green);
             }
             else if(input_event->key == InputKeyDown && input_event->type == InputTypeShort) {
-                // Decrease volume (with lower limit)
-                app->volume = (app->volume > 0.1f) ? app->volume - 0.1f : 0.1f;
+                // Decrease volume (with lower limit of 0.0f for mute)
+                app->volume = (app->volume > 0.0f) ? app->volume - 0.25f : 0.0f;
+                if (app->volume < 0.0f) app->volume = 0.0f; // Make sure we don't go below 0
                 notification_message(app->notifications, &sequence_set_only_green_255);
                 furi_delay_ms(100);
                 notification_message(app->notifications, &sequence_reset_green);
