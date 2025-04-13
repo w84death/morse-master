@@ -388,21 +388,20 @@ static void morse_app_draw_callback(Canvas* canvas, void* ctx) {
             
         case MorseStateMenu: {
             canvas_draw_icon(canvas, 0, 45, &I_menu_bg);
+            canvas_draw_icon(canvas, 4, 5, &I_wood);
 
-            canvas_set_color(canvas, ColorWhite);
             // Define menu items and their corresponding titles
-            const char* menu_titles[] = {"LEARN", "PRACTICE", "HELP"};
-            
+            const char* menu_titles[] = {"Learn", "Practice", "Help"};
+
             // Display title based on current selection at the top
             canvas_set_font(canvas, FontPrimary);
-            canvas_draw_str_aligned(canvas, 64, 10, AlignCenter, AlignCenter, menu_titles[app->menu_selection]);
-            
             canvas_set_color(canvas, ColorBlack);
-
+            canvas_draw_str_aligned(canvas, 64, 12, AlignCenter, AlignCenter, menu_titles[app->menu_selection]);
+            
             const int16_t y_offset = 24;
             canvas_draw_icon(canvas, 12, y_offset + (app->menu_selection==0?8:0), &I_learn);
             canvas_draw_icon(canvas, 54, y_offset + (app->menu_selection==1?8:0), &I_practice);
-            canvas_draw_icon(canvas, 94, y_offset + (app->menu_selection==2?8:0), &I_help);
+            canvas_draw_icon(canvas, 94, y_offset + (app->menu_selection==2?8:0), &I_parrot);
 
             const int16_t hand_y_offset = 46;
             canvas_draw_icon(canvas, -15+app->menu_selection*40, hand_y_offset, &I_hand_left);
@@ -487,24 +486,24 @@ static void morse_app_draw_callback(Canvas* canvas, void* ctx) {
         }
         
         case MorseStateHelp: {
-            canvas_set_color(canvas, ColorWhite);
-
-            canvas_set_font(canvas, FontPrimary);
-            canvas_draw_str(canvas, 2, 10, "MORSE CODE HELP");
-            canvas_draw_line(canvas, 0, 12, 128, 12);
+            canvas_set_color(canvas, ColorBlack);
+            canvas_draw_icon(canvas, 5, 6, &I_board);
+            canvas_draw_icon(canvas, 106, 1, &I_p1x);
+            canvas_draw_icon(canvas, 104, 52, &I_branch);
+            canvas_draw_icon(canvas, 104, 33, &I_parrot);
             
             canvas_set_font(canvas, FontSecondary);
             
-            int16_t y_offset = 22;
-            canvas_draw_str(canvas, 2, y_offset, "PRACTICE MODE:");
-            y_offset += 10;
-            canvas_draw_str(canvas, 2, y_offset, "- OK and LEFT:");
-            y_offset += 10;
-            canvas_draw_str(canvas, 2, y_offset, "    Short=dot, Long=dash");
-            y_offset += 10;
-            canvas_draw_str(canvas, 2, y_offset, "- RIGHT: Clear input");
-            y_offset += 10;
-            canvas_draw_str(canvas, 2, y_offset, "- UP/DOWN: Adjust volume");
+            int16_t x_offset = 12;
+            int16_t y_offset = 19;
+
+            canvas_draw_str(canvas, x_offset, y_offset, "OK or LEFT: dot");
+            y_offset += 9;
+            canvas_draw_str(canvas, x_offset, y_offset, "Long press: dash");
+            y_offset += 12;
+            canvas_draw_str(canvas, x_offset, y_offset, "RIGHT: Clear input");
+            y_offset += 12;
+            canvas_draw_str(canvas, x_offset, y_offset, "UP/DOWN: Volume");
         
             break;
         }
@@ -772,7 +771,7 @@ int32_t p1x_morse_master_app(void* p) {
     
     // Set up default values
     app->app_state = MorseStateTitleScreen;  // Start with title screen
-    app->menu_selection = 0;
+    app->menu_selection = 1;
     app->is_running = true;
     app->sound_running = true;
     app->input_active = false;  // Initialize input_active flag
