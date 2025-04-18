@@ -2,7 +2,7 @@
 
 ![Morse Master Title Screen](media/titlescreen.png)
 
-A comprehensive Morse code learning and practice app for Flipper Zero
+A comprehensive Morse code learning and practice app for Flipper Zero. Final release of version 1.0.
 
 ## Overview
 
