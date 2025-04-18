@@ -1,6 +1,7 @@
 # Morse Master: Morse Code Learning Toolkit for Flipper Zero
 
-![media/titlescreen.png](Morse Master Title Screen)
+![Morse Master Title Screen](media/titlescreen.png)
+
 A comprehensive Morse code learning and practice app for Flipper Zero
 
 ## Overview
@@ -11,7 +12,7 @@ The Morse Master is an interactive application for Flipper Zero that helps you l
 
 ### Learning Mode
 
-![media/learn.png](Learning)
+![Learning](media/learn.png)
 
 - **Character Sets**: Switch between letters (A-Z) and numbers (0-9) with the LEFT/RIGHT buttons
 - **Visual Representation**: See the Morse code pattern for each character
@@ -20,7 +21,7 @@ The Morse Master is an interactive application for Flipper Zero that helps you l
 
 ### Practice Mode
 
-![media/practice.png](Practice)
+![Practice](media/practice.png)
 
 - **Real-time Input**: Compose Morse code using short presses (dots) and long presses (dashes)
 - **Live Decoding**: See your input decoded as you enter Morse code
@@ -30,7 +31,7 @@ The Morse Master is an interactive application for Flipper Zero that helps you l
 
 ## Help
 
-![media/help.png](Help)
+![Help](media/help.png)
 
 
 ## Installation
