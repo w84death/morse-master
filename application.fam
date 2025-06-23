@@ -1,5 +1,5 @@
 App(
-    appid="p1x_morse_master",  # Must be unique
+    appid="morse_master",  # Must be unique
     name="Morse Master",  # Displayed in menus
     apptype=FlipperAppType.EXTERNAL,
     entry_point="p1x_morse_master_app",
