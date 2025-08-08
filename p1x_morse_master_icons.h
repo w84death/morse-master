@@ -25,4 +25,3 @@ extern const Icon I_vol_100;
 extern const Icon I_board;
 extern const Icon I_p1x;
 extern const Icon I_branch;
-extern const Icon I_parrot;
