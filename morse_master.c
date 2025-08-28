@@ -691,16 +691,20 @@ static void morse_app_input_callback(InputEvent* input_event, void* ctx) {
                     }
                 }
             }
-            else if(input_event->key == InputKeyRight && input_event->type == InputTypeShort) {
-                // Clear all input
-                memset(app->user_input, 0, sizeof(app->user_input));
-                app->input_position = 0;
+            else if(input_event->key == InputKeyRight) {
+                if(input_event->type == InputTypeShort ) {
+                  // Clear all input
+                  memset(app->user_input, 0, sizeof(app->user_input));
+                  app->input_position = 0;
 
-                memset(app->decoded_text, 0, sizeof(app->decoded_text));
-                memset(app->current_morse, 0, sizeof(app->current_morse));
-                app->current_morse_position = 0;
-                app->auto_add_space = false;
-                app->last_input_time = 0;
+                  memset(app->current_morse, 0, sizeof(app->current_morse));
+                  app->current_morse_position = 0;
+                  app->auto_add_space = false;
+                  app->last_input_time = 0;
+                } else if (input_event->type == InputTypeLong){
+                  memset(app->decoded_text, 0, sizeof(app->decoded_text));
+                  memset(app->top_words, 0, sizeof(app->top_words));
+                }
             }
             else if(input_event->key == InputKeyUp && input_event->type == InputTypeShort) {
                 // Increase volume (with upper limit)
